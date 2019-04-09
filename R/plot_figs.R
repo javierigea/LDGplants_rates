@@ -557,3 +557,243 @@ plot_Fig2_latitudinalband_boxplots_subsampled_extremebias<-function(){
   boxplot(log(latband.strapp.speciation[,13]),horizontal=T,boxwex=1.2,outline=F,whisklty=0,staplelty=0,notch=T,at=70/10,add=T,col=adjustcolor(blue,alpha=.7),frame=F,xaxt='n')
   boxplot(log(latband.strapp.speciation[,14]),horizontal=T,boxwex=1.2,outline=F,whisklty=0,staplelty=0,notch=F,at=80/10,add=T,col=adjustcolor(blue,alpha=.7),frame=F,xaxt='n')
 }
+
+plot_Fig2_latitudinalband_boxplots_subsampled_extremebias_summary<-function(){
+  #get rates from BAMM
+  GBIFdata<-read.csv('./raw_data/GBIFdatasummary.csv')
+  GBIFdata$tropical<-0
+  GBIFdata[(GBIFdata$Median.Latitude<23.5)&(GBIFdata$Median.Latitude>(-23.5)),'tropical']<-1
+  GBIFdata$strict.tropical<-NA
+  #strict tropical 1 = abs(max latitude)<23.5 & abs(min latitude)<23.5  & median.latitude <23.5
+  GBIFdata[abs(GBIFdata$Max.Latitude)<=23.5&abs(GBIFdata$Min.Latitude)<=23.5&abs(GBIFdata$Median.Latitude)<=23.5,'strict.tropical']<-1
+  #strict tropical 0 (strict temperate)
+  GBIFdata[abs(GBIFdata$Max.Latitude)>23.5&abs(GBIFdata$Min.Latitude)>23.5&abs(GBIFdata$Median.Latitude)>23.5,'strict.tropical']<-0
+  #2: not strict tropical or strict temperate species
+  GBIFdata$strict.tropical[is.na(GBIFdata$strict.tropical)]<-2
+  GBIFdata$binomial<-paste(GBIFdata$Genus.Name,GBIFdata$Species.Name,sep='_')
+  BAMM.object<-readRDS(file='./raw_data/all_clades_50million_1000samples_latitudedata.RDS')
+  #subset table to BAMM species
+  GBIFdata.BAMM<-GBIFdata[GBIFdata$binomial%in%BAMM.object$tip.label,]
+  #remove duplicates in GBIFdata (6 species with same info but two rows - one with present in garden, one with absent in garden)#
+  GBIFdata.BAMM<-GBIFdata.BAMM[-which(duplicated(GBIFdata.BAMM$binomial)),]
+  GBIFdata.BAMM<-unique(GBIFdata.BAMM)
+  GBIFdata.BAMM$latitudinal.band<-NA
+  GBIFdata.BAMM$latitudinal.band<-apply(GBIFdata.BAMM,1,function(x) round_any(as.numeric(x['Median.Latitude']),10))
+  ratesdf<-getTipRates(BAMM.object)
+  ratesdf.netdiv<-getTipRates(BAMM.object,returnNetDiv = T)
+  rates.df<-as.data.frame(cbind(names(ratesdf$lambda.avg),ratesdf$lambda.avg,ratesdf$mu.avg,ratesdf.netdiv$netdiv.avg),stringsAsFactors = F)
+  row.names(rates.df)<-NULL
+  colnames(rates.df)<-c('species','lambda.avg','mu.avg','netdiv.avg')
+  GBIFdata.BAMM.rates<-merge(GBIFdata.BAMM,rates.df,by.x='binomial',by.y='species')
+  GBIFdata.BAMM.rates$lambda.avg<-as.numeric(GBIFdata.BAMM.rates$lambda.avg)
+  GBIFdata.BAMM.rates$mu.avg<-as.numeric(GBIFdata.BAMM.rates$mu.avg)
+  GBIFdata.BAMM.rates$netdiv.avg<-as.numeric(GBIFdata.BAMM.rates$netdiv.avg)
+  GBIFdata.BAMM.rates<-GBIFdata.BAMM.rates[,c('binomial','lambda.avg')]
+  latband.strapp.files<-list.files(path='./results/subsampled_extremebias/input_tables/',pattern='GBIFdata.BAMM.subsampled_extremebias_.+.txt')
+  latband.strapp.tables<-lapply(latband.strapp.files,function(x)read.table(paste('./results/subsampled_extremebias/input_tables/',x,sep=''),header=T,sep='\t',stringsAsFactors = F))
+  latband.strapp.tables<-lapply(latband.strapp.tables,function(x)merge(x,GBIFdata.BAMM.rates))
+  #get quartile 25,50,75 for each table across all lat bands
+  latband.strapp.tables.quartiles<-lapply(latband.strapp.tables,function(x)aggregate(lambda.avg~latitudinal.band,data=x,function(x)quantile(x,c(0.25,0.5,0.75))))
+  #get averages of quartiles 25,50,75 across all tables for each latitudinal band
+  latband.average.quartiles<-lapply(seq(-60,90,10),function(x)lapply(latband.strapp.tables.quartiles,function(y){if(nrow(y[y$latitudinal.band==x,])==0){NA}else{y[y$latitudinal.band==x,]}}))
+  latband.average.quartiles.all.tables<-lapply(seq(-60,90,10),function(x)lapply(latband.strapp.tables.quartiles,function(y){if(nrow(y[y$latitudinal.band==x,])==0){NA}else{y[y$latitudinal.band==x,]}}))
+  latband.average.quartiles.all.tables.clean<-lapply(latband.average.quartiles.all.tables,function(x) x[!unlist(lapply(x,function(y){all(is.na(y))}))])
+  latband.average.quartiles.all.tables.clean.df<-lapply(latband.average.quartiles.all.tables.clean,function(x)do.call('rbind',x))
+  latband.average.quartiles.all.tables.clean.IQR.median<-lapply(latband.average.quartiles.all.tables.clean.df,function(x)unlist(lapply(c(1,2,3),function(y)mean(x[,2][,y]))))
+  #####CHANGE PATH OF REALMS LAYER####
+  realms.layer<-readOGR('/Users/javier/Documents/Work/HOTSPOTS/repositories/raw_data/GIS/realms/','newRealms')
+  realms.layer<-gUnaryUnion(realms.layer)
+  plot(realms.layer,lwd=0.5,border='grey80')
+  #for (i in seq(from=85,to=-55,by=-10)){
+  #  abline(h=i,col='grey70')
+  #}
+  abline(v=0)
+  abline(h=23.5,lty=2,col='grey80')
+  abline(h=-23.5,lty=2,col='grey80')
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(-55,-55,-23.5,-23.5,-55),col=adjustcolor(blue,alpha.f = 0.3),border=NA)
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(-23.5,-23.5,23.5,23.5,-23.5),col=adjustcolor(red,alpha.f = 0.3),border=NA)
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(85,85,23.5,23.5,85),col=adjustcolor(blue,alpha.f = 0.3),border=NA)
+  u<-par('usr')
+  #plot(c(0,0),type='n',xlim=c(u[1]/30,u[2]/30),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n',bty='n')
+  #plot(c(0,0),type='n',xlim=c(u[1]/50,u[2]/30),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  #plot(c(0,0),type='n',xlim=c(-log(6),log(6)),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  
+  plot(c(0,0),type='n',xlim=c(-3,3),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  
+  #axis(1,seq(from=-3,to=3,by=1),labels=seq(from=-3,to=3,by=1))
+  axis(1,c(log(c(0.25,1,2,5,10))),labels=c(0.25,1,2,5,10))
+  
+  #axis(1,seq(from=-3,to=3,by=1),labels=seq(from=-3,to=3,by=1))
+  #axis(1,c(log(c(0.5,1,2,5))),labels=c(0.5,1,2,5))
+  axis(4,seq(from=-50/10,to=80/10,by=10/10),labels=seq(from=-50,to=80,by=10),las=2,cex.axis=.5)
+  #axis(1,c(log(0),log(3),log(6),log(9),log(12),log(15)),labels=c(0,3,6,9,12,15))
+  abline(v=0)
+  #par(new=T)
+  
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][3]),ytop = -50/10,ybottom=(-50/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][2])),y=c(-50/10,(-50/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][3]),ytop = -40/10,ybottom=(-40/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][2])),y=c(-40/10,(-40/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][3]),ytop = -30/10,ybottom=(-30/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][2])),y=c(-30/10,(-30/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][3]),ytop = -20/10,ybottom=(-20/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][2])),y=c(-20/10,(-20/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][3]),ytop = -10/10,ybottom=(-10/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][2])),y=c(-10/10,(-10/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][3]),ytop = 0/10,ybottom=(0/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][2])),y=c(0/10,(0/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][3]),ytop = 10/10,ybottom=(10/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][2])),y=c(10/10,(10/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][3]),ytop = 20/10,ybottom=(20/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][2])),y=c(20/10,(20/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][3]),ytop = 30/10,ybottom=(30/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][2])),y=c(30/10,(30/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][3]),ytop = 40/10,ybottom=(40/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][2])),y=c(40/10,(40/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][3]),ytop = 50/10,ybottom=(50/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][2])),y=c(50/10,(50/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][3]),ytop = 60/10,ybottom=(60/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][2])),y=c(60/10,(60/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][3]),ytop = 70/10,ybottom=(70/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][2])),y=c(70/10,(70/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][3]),ytop = 80/10,ybottom=(80/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][2])),y=c(80/10,(80/10)+(1.2/3)),col='black',lwd=1)
+  
+  
+  
+  
+}
+
+plot_Fig2_latitudinalband_boxplots_subsampled_unbiased_summary<-function(){
+  #get rates from BAMM
+  GBIFdata<-read.csv('./raw_data/GBIFdatasummary.csv')
+  GBIFdata$tropical<-0
+  GBIFdata[(GBIFdata$Median.Latitude<23.5)&(GBIFdata$Median.Latitude>(-23.5)),'tropical']<-1
+  GBIFdata$strict.tropical<-NA
+  #strict tropical 1 = abs(max latitude)<23.5 & abs(min latitude)<23.5  & median.latitude <23.5
+  GBIFdata[abs(GBIFdata$Max.Latitude)<=23.5&abs(GBIFdata$Min.Latitude)<=23.5&abs(GBIFdata$Median.Latitude)<=23.5,'strict.tropical']<-1
+  #strict tropical 0 (strict temperate)
+  GBIFdata[abs(GBIFdata$Max.Latitude)>23.5&abs(GBIFdata$Min.Latitude)>23.5&abs(GBIFdata$Median.Latitude)>23.5,'strict.tropical']<-0
+  #2: not strict tropical or strict temperate species
+  GBIFdata$strict.tropical[is.na(GBIFdata$strict.tropical)]<-2
+  GBIFdata$binomial<-paste(GBIFdata$Genus.Name,GBIFdata$Species.Name,sep='_')
+  BAMM.object<-readRDS(file='./raw_data/all_clades_50million_1000samples_latitudedata.RDS')
+  #subset table to BAMM species
+  GBIFdata.BAMM<-GBIFdata[GBIFdata$binomial%in%BAMM.object$tip.label,]
+  #remove duplicates in GBIFdata (6 species with same info but two rows - one with present in garden, one with absent in garden)#
+  GBIFdata.BAMM<-GBIFdata.BAMM[-which(duplicated(GBIFdata.BAMM$binomial)),]
+  GBIFdata.BAMM<-unique(GBIFdata.BAMM)
+  GBIFdata.BAMM$latitudinal.band<-NA
+  GBIFdata.BAMM$latitudinal.band<-apply(GBIFdata.BAMM,1,function(x) round_any(as.numeric(x['Median.Latitude']),10))
+  ratesdf<-getTipRates(BAMM.object)
+  ratesdf.netdiv<-getTipRates(BAMM.object,returnNetDiv = T)
+  rates.df<-as.data.frame(cbind(names(ratesdf$lambda.avg),ratesdf$lambda.avg,ratesdf$mu.avg,ratesdf.netdiv$netdiv.avg),stringsAsFactors = F)
+  row.names(rates.df)<-NULL
+  colnames(rates.df)<-c('species','lambda.avg','mu.avg','netdiv.avg')
+  GBIFdata.BAMM.rates<-merge(GBIFdata.BAMM,rates.df,by.x='binomial',by.y='species')
+  GBIFdata.BAMM.rates$lambda.avg<-as.numeric(GBIFdata.BAMM.rates$lambda.avg)
+  GBIFdata.BAMM.rates$mu.avg<-as.numeric(GBIFdata.BAMM.rates$mu.avg)
+  GBIFdata.BAMM.rates$netdiv.avg<-as.numeric(GBIFdata.BAMM.rates$netdiv.avg)
+  GBIFdata.BAMM.rates<-GBIFdata.BAMM.rates[,c('binomial','lambda.avg')]
+  latband.strapp.files<-list.files(path='./results/subsampled_unbiased/input_tables/',pattern='GBIFdata.BAMM.subsampled_.+.txt')
+  latband.strapp.tables<-lapply(latband.strapp.files,function(x)read.table(paste('./results/subsampled_unbiased/input_tables/',x,sep=''),header=T,sep='\t',stringsAsFactors = F))
+  latband.strapp.tables<-lapply(latband.strapp.tables,function(x)merge(x,GBIFdata.BAMM.rates))
+  #get quartile 25,50,75 for each table across all lat bands
+  latband.strapp.tables.quartiles<-lapply(latband.strapp.tables,function(x)aggregate(lambda.avg~latitudinal.band,data=x,function(x)quantile(x,c(0.25,0.5,0.75))))
+  #get averages of quartiles 25,50,75 across all tables for each latitudinal band
+  latband.average.quartiles<-lapply(seq(-60,90,10),function(x)lapply(latband.strapp.tables.quartiles,function(y){if(nrow(y[y$latitudinal.band==x,])==0){NA}else{y[y$latitudinal.band==x,]}}))
+  latband.average.quartiles.all.tables<-lapply(seq(-60,90,10),function(x)lapply(latband.strapp.tables.quartiles,function(y){if(nrow(y[y$latitudinal.band==x,])==0){NA}else{y[y$latitudinal.band==x,]}}))
+  latband.average.quartiles.all.tables.clean<-lapply(latband.average.quartiles.all.tables,function(x) x[!unlist(lapply(x,function(y){all(is.na(y))}))])
+  latband.average.quartiles.all.tables.clean.df<-lapply(latband.average.quartiles.all.tables.clean,function(x)do.call('rbind',x))
+  latband.average.quartiles.all.tables.clean.IQR.median<-lapply(latband.average.quartiles.all.tables.clean.df,function(x)unlist(lapply(c(1,2,3),function(y)mean(x[,2][,y]))))
+  #####CHANGE PATH OF REALMS LAYER####
+  realms.layer<-readOGR('/Users/javier/Documents/Work/HOTSPOTS/repositories/raw_data/GIS/realms/','newRealms')
+  realms.layer<-gUnaryUnion(realms.layer)
+  plot(realms.layer,lwd=0.5,border='grey80')
+  #for (i in seq(from=85,to=-55,by=-10)){
+  #  abline(h=i,col='grey70')
+  #}
+  abline(v=0)
+  abline(h=23.5,lty=2,col='grey80')
+  abline(h=-23.5,lty=2,col='grey80')
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(-55,-55,-23.5,-23.5,-55),col=adjustcolor(blue,alpha.f = 0.3),border=NA)
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(-23.5,-23.5,23.5,23.5,-23.5),col=adjustcolor(red,alpha.f = 0.3),border=NA)
+  #polygon(x=c(min(u.box[c(1,2)]),max(u.box[c(1,2)]),max(u.box[c(1,2)]),min(u.box[c(1,2)]),min(u.box[c(1,2)])),y=c(85,85,23.5,23.5,85),col=adjustcolor(blue,alpha.f = 0.3),border=NA)
+  u<-par('usr')
+  #plot(c(0,0),type='n',xlim=c(u[1]/30,u[2]/30),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n',bty='n')
+  #plot(c(0,0),type='n',xlim=c(u[1]/50,u[2]/30),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  #plot(c(0,0),type='n',xlim=c(-log(6),log(6)),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  
+  plot(c(0,0),type='n',xlim=c(-3,3),ylim=c(u[3]/10,u[4]/10),xlab='',ylab='',xaxt='n',yaxt='n')
+  
+  #axis(1,seq(from=-3,to=3,by=1),labels=seq(from=-3,to=3,by=1))
+  axis(1,c(log(c(0.25,1,2,5,10))),labels=c(0.25,1,2,5,10))
+  
+  #axis(1,seq(from=-3,to=3,by=1),labels=seq(from=-3,to=3,by=1))
+  #axis(1,c(log(c(0.5,1,2,5))),labels=c(0.5,1,2,5))
+  axis(4,seq(from=-50/10,to=80/10,by=10/10),labels=seq(from=-50,to=80,by=10),las=2,cex.axis=.5)
+  #axis(1,c(log(0),log(3),log(6),log(9),log(12),log(15)),labels=c(0,3,6,9,12,15))
+  abline(v=0)
+  #par(new=T)
+  
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][3]),ytop = -50/10,ybottom=(-50/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[2]][2])),y=c(-50/10,(-50/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][3]),ytop = -40/10,ybottom=(-40/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[3]][2])),y=c(-40/10,(-40/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][3]),ytop = -30/10,ybottom=(-30/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[4]][2])),y=c(-30/10,(-30/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][3]),ytop = -20/10,ybottom=(-20/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[5]][2])),y=c(-20/10,(-20/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][3]),ytop = -10/10,ybottom=(-10/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[6]][2])),y=c(-10/10,(-10/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][3]),ytop = 0/10,ybottom=(0/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[7]][2])),y=c(0/10,(0/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][3]),ytop = 10/10,ybottom=(10/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[8]][2])),y=c(10/10,(10/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][3]),ytop = 20/10,ybottom=(20/10)+(1.2/3),col=adjustcolor(red,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[9]][2])),y=c(20/10,(20/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][3]),ytop = 30/10,ybottom=(30/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[10]][2])),y=c(30/10,(30/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][3]),ytop = 40/10,ybottom=(40/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[11]][2])),y=c(40/10,(40/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][3]),ytop = 50/10,ybottom=(50/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[12]][2])),y=c(50/10,(50/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][3]),ytop = 60/10,ybottom=(60/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[13]][2])),y=c(60/10,(60/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][3]),ytop = 70/10,ybottom=(70/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[14]][2])),y=c(70/10,(70/10)+(1.2/3)),col='black',lwd=1)
+  
+  rect(xleft=log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][1]),xright=log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][3]),ytop = 80/10,ybottom=(80/10)+(1.2/3),col=adjustcolor(blue,alpha=.7),xaxt='n')
+  lines(x=c(log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][2]),log(latband.average.quartiles.all.tables.clean.IQR.median[[15]][2])),y=c(80/10,(80/10)+(1.2/3)),col='black',lwd=1)
+  
+  
+  
+  
+}
