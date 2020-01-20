@@ -57,6 +57,170 @@ data_frame_compare_rates_full_vs_subsampled<-function(folder.subsampled.event_da
   return(rates.df.merge)
 }
 
+replicates_phylolm_rho_trop_vs_temp_extremebias_GBOTB<-function(rates.df.merge){
+  #run linear models for trop and temp for each subsample
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  cor.spearman.log<-list()
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    cor.spearman.log[[i]]<-cor.test(log(as.numeric(rates.df.merge.subset$lambda.avg.28k)),log(as.numeric(rates.df.merge.subset$lambda.avg.10k)),method='s')
+    
+  }
+  return(list(lm.both,cor.spearman.log))
+}
+replicates_phylolm_rho_trop_vs_temp_unbiased_GBOTB<-function(rates.df.merge){
+  #run linear models for trop and temp for each subsample
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  cor.spearman.log<-list()
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_unbiased_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    cor.spearman.log[[i]]<-cor.test(log(as.numeric(rates.df.merge.subset$lambda.avg.28k)),log(as.numeric(rates.df.merge.subset$lambda.avg.10k)),method='s')
+    
+  }
+  return(list(lm.both,cor.spearman.log))
+}
+replicates_phylolm_rho_trop_vs_temp_small_GBOTB<-function(rates.df.merge){
+  #run linear models for trop and temp for each subsample
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  cor.spearman.log<-list()
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_small_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    cor.spearman.log[[i]]<-cor.test(log(as.numeric(rates.df.merge.subset$lambda.avg.28k)),log(as.numeric(rates.df.merge.subset$lambda.avg.10k)),method='s')
+    
+  }
+  return(list(lm.both,cor.spearman.log))
+}
+replicates_phylolm_rho_trop_vs_temp_extremebias_GBOTB<-function(rates.df.merge){
+  #run linear models for trop and temp for each subsample
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  cor.spearman.log<-list()
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    cor.spearman.log[[i]]<-cor.test(log(as.numeric(rates.df.merge.subset$lambda.avg.28k)),log(as.numeric(rates.df.merge.subset$lambda.avg.10k)),method='s')
+    
+  }
+  return(list(lm.both,cor.spearman.log))
+}
+replicates_phylolm_rho_trop_vs_temp_small_GBOTB<-function(rates.df.merge){
+  #run linear models for trop and temp for each subsample
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  cor.spearman.log<-list()
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_small_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    cor.spearman.log[[i]]<-cor.test(log(as.numeric(rates.df.merge.subset$lambda.avg.28k)),log(as.numeric(rates.df.merge.subset$lambda.avg.10k)),method='s')
+    
+  }
+  return(list(lm.both,cor.spearman.log))
+}
+data_frame_compare_rates_full_vs_subsampled_GBOTB<-function(folder.subsampled.event_data){
+  #get all eventData RDS of subsampled replicates
+  cat('getting all eventdatas in input folder','\n')
+  eventdata.files<-list.files(folder.subsampled.event_data,pattern='.RDS')
+  eventdata.list<-lapply(eventdata.files,function(x)readRDS(paste(folder.subsampled.event_data,x,sep='')))
+  names(eventdata.list)<-gsub(gsub(eventdata.files,pattern='.*_subsampled',replacement='subsampled'),pattern='_eventData.RDS',replacement='')
+  #get TipRates of all subsampled dataset
+  cat('getting rates of input eventdatas','\n')
+  ratesdf.subsampled.list<-lapply(eventdata.list,function(x)getTipRates(x))
+  ratesdf.subsampled.list<-lapply(ratesdf.subsampled.list,function(x)as.data.frame(cbind(names(x$lambda.avg),x$lambda.avg),stringsAsFactors = F))
+  ratesdf.subsampled.list<-lapply(ratesdf.subsampled.list,function(x){rownames(x)<-NULL;return(x)})
+  names(ratesdf.subsampled.list)<-names(eventdata.list)
+  ratesdf.subsampled.list<-lapply(c(1:length(ratesdf.subsampled.list)),function(x){colnames(ratesdf.subsampled.list[[x]])<-c('species',paste(names(ratesdf.subsampled.list)[x],'_lambda.avg',sep=''));return(ratesdf.subsampled.list[[x]])})
+  #load the 28,057 BAMM object
+  cat('getting rates of 60k tip dataset','\n')
+  BAMM.object<-readRDS(file='./raw_data/all_clades_50million_1000samples_latitudedata_GBOTB.RDS')
+  #and get TipRates
+  ratesdf<-getTipRates(BAMM.object)
+  rates.df<-as.data.frame(cbind(names(ratesdf$lambda.avg),ratesdf$lambda.avg),stringsAsFactors = F)
+  row.names(rates.df)<-NULL
+  colnames(rates.df)<-c('species','lambda.avg.28k')
+  #combine all tip estimates across subsamples with the full dataset estimates
+  cat('merging all rate estimates into a single dataframe','\n')
+  rates.df.merge<-rates.df
+  for (i in 1:length(ratesdf.subsampled.list)){
+    rates.df.merge<-merge(rates.df.merge,ratesdf.subsampled.list[[i]],by.x='species',by.y='species',all.x=T)
+  }
+  #add tropical info + other GBIFstuff
+  cat('adding GBIF info etc','\n')
+  GBIFdata<-read.csv('./raw_data/GBIFdatasummary.csv')
+  GBIFdata$tropical<-0
+  GBIFdata[(GBIFdata$Median.Latitude<23.5)&(GBIFdata$Median.Latitude>(-23.5)),'tropical']<-1
+  GBIFdata$strict.tropical<-NA
+  #strict tropical 1 = abs(max latitude)<23.5 & abs(min latitude)<23.5  & median.latitude <23.5
+  GBIFdata[abs(GBIFdata$Max.Latitude)<=23.5&abs(GBIFdata$Min.Latitude)<=23.5&abs(GBIFdata$Median.Latitude)<=23.5,'strict.tropical']<-1
+  #strict tropical 0 (strict temperate)
+  GBIFdata[abs(GBIFdata$Max.Latitude)>23.5&abs(GBIFdata$Min.Latitude)>23.5&abs(GBIFdata$Median.Latitude)>23.5,'strict.tropical']<-0
+  #2: not strict tropical or strict temperate species
+  GBIFdata$strict.tropical[is.na(GBIFdata$strict.tropical)]<-2
+  GBIFdata$binomial<-paste(GBIFdata$Genus.Name,GBIFdata$Species.Name,sep='_')
+  GBIFdata<-GBIFdata[-which(duplicated(GBIFdata$binomial)),]
+  GBIFdata<-unique(GBIFdata)
+  GBIFdata$latitudinal.band<-NA
+  GBIFdata$latitudinal.band<-apply(GBIFdata,1,function(x) round_any(as.numeric(x['Median.Latitude']),10))
+  #merge with rates.df.merge
+  rates.df.merge<-merge(rates.df.merge,GBIFdata,by.x='species',by.y='binomial',all.x=T)
+  return(rates.df.merge)
+}
+
 plot_replicates_lm_trop_vs_temp<-function(rates.df.merge){
   rates.df.merge$colour<-NA
   rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
@@ -174,6 +338,295 @@ replicates_phylolm_rho_trop_vs_temp_extremebias<-function(rates.df.merge){
     
   }
   return(list(lm.both,cor.spearman.log))
+}
+
+plot_replicates_phylolm_trop_vs_temp_extremebias_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[1]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+    }
+    box(col = "grey60")
+    mtext("λ.extremebiased(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
+}
+
+plot_replicates_phylolm_trop_vs_temp_unbiased_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_unbiased_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_unbiased_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[1]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+    }
+    box(col = "grey60")
+    mtext("λ.unbiased(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
+}
+
+plot_replicates_phylolm_trop_vs_temp_small_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_small_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_small_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[1]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = seq(0,15,5))
+    }
+    box(col = "grey60")
+    mtext("λ.small(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
+}
+
+plot_replicates_phylolm_trop_vs_temp_extremebias_log_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge[,grep('lambda',colnames(rates.df.merge))]<-log(rates.df.merge[,grep('lambda',colnames(rates.df.merge))])
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_extremebias_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[1]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+    }
+    box(col = "grey60")
+    mtext("λ.extremebiased(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
+}
+plot_replicates_phylolm_trop_vs_temp_unbiased_log_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge[,grep('lambda',colnames(rates.df.merge))]<-log(rates.df.merge[,grep('lambda',colnames(rates.df.merge))])
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_unbiased_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_unbiased_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[1]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+    }
+    box(col = "grey60")
+    mtext("λ.unbiased(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
+}
+plot_replicates_phylolm_trop_vs_temp_small_log_GBOTB<-function(rates.df.merge){
+  par(mfrow=c(2,5))
+  lm.both<-list()
+  tree<-read.tree('./raw_data/GBOTB_extended_bif_angios.tree')
+  rates.df.merge[,grep('lambda',colnames(rates.df.merge))]<-log(rates.df.merge[,grep('lambda',colnames(rates.df.merge))])
+  rates.df.merge$colour<-NA
+  rates.df.merge[rates.df.merge$tropical==0,'colour']<-blue
+  rates.df.merge[rates.df.merge$tropical==1,'colour']<-red
+  par(mar = c(0, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+  par(pty="s") 
+  par(tcl = -0.25)
+  par(mgp = c(2, 0.6, 0))
+  par(mfrow=c(2,5))
+  #this is 10 because there are 10 replicates
+  for (i in c(1:10)){
+    selected.columns<-c('species','lambda.avg.28k',paste('subsampled_small_',i,'_lambda.avg',sep=''),'tropical')
+    cat(i,'\n')
+    #select columns with 28k rates and subsampled rate of replicate i
+    rates.df.merge.subset<-rates.df.merge[,selected.columns]
+    rates.df.merge.subset<-rates.df.merge.subset[complete.cases(rates.df.merge.subset),]
+    colnames(rates.df.merge.subset)[3]<-'lambda.avg.10k'
+    rownames(rates.df.merge.subset)<-rates.df.merge.subset$species
+    #create a tree with species in subsampled dataset only
+    replicate.tree<-drop.tip(tree,setdiff(tree$tip.label,rates.df.merge.subset$species))
+    #phylolm of full rates ~ subsampled rates * tropical
+    lm.both[[i]]<-phylolm(as.numeric(lambda.avg.28k)~as.numeric(lambda.avg.10k)*tropical,data=rates.df.merge.subset,phy = replicate.tree,model = "lambda")
+    plot(as.numeric(rates.df.merge[,grep('lambda.avg.28k',colnames(rates.df.merge))])~as.numeric(rates.df.merge[,grep(paste('subsampled_small_',i,'_lambda.avg',sep=''),colnames(rates.df.merge))]),pch=16,xlab=paste('rates.',gsub(colnames(rates.df.merge)[i+2],pattern='_lambda.avg',replacement=''),sep=''),ylab='rates.28k',col=adjustcolor(rates.df.merge$colour,alpha.f = 0.1),axes=F,main=i)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2],col=blue)
+    abline(lm.both[[i]]$coefficients[1],lm.both[[i]]$coefficients[2]+lm.both[[i]]$coefficients[3],col=red)
+    u<-par('usr')
+    lower.confint.lm.temp<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    upper.confint.lm.temp<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2], from=u[1], to=u[2],add=T,col=adjustcolor(red,alpha=0.3))
+    lower.confint.lm.trop<-curve(confint(lm.both[[i]])[1,1] + x*confint(lm.both[[i]])[2,1]+x*confint(lm.both[[i]])[3,1]+x*confint(lm.both[[i]])[4,1], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    upper.confint.lm.trop<-curve(confint(lm.both[[i]])[1,2] + x*confint(lm.both[[i]])[2,2]+x*confint(lm.both[[i]])[3,2]+x*confint(lm.both[[i]])[4,2], from=u[1], to=u[2],add=T,col=adjustcolor(blue,alpha=0.3))
+    polygon(c(lower.confint.lm.trop$x,rev(upper.confint.lm.trop$x)), c(lower.confint.lm.trop$y, rev(upper.confint.lm.trop$y)),col=adjustcolor(red,alpha=0.3),border=adjustcolor(red,alpha=0.3))
+    polygon(c(lower.confint.lm.temp$x,rev(upper.confint.lm.temp$x)), c(lower.confint.lm.temp$y, rev(upper.confint.lm.temp$y)),col=adjustcolor(blue,alpha=0.3),border=adjustcolor(blue,alpha=0.3))
+    mtext(paste(letters[i],')',sep=''), side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
+    if (i %in% c(6,7,8,9,10)){
+      axis(1, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+      
+    }else if (i %in% c(1,6)){
+      axis(2, col = "grey40", col.axis = "grey20", at = log(c(0.05,1,5)),labels=c(0.05,1,5))
+    }
+    box(col = "grey60")
+    mtext("λ.small(lineages/myr)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+    mtext("λ.full (lineages/myr)", side = 2, outer = TRUE, cex = 0.7, line = 2.2,col = "grey20")
+  }
 }
 
 replicates_phylolm_rho_trop_vs_temp_small<-function(rates.df.merge){
